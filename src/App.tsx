@@ -10,6 +10,7 @@ import Tracking from "./pages/Tracking";
 import GameSummary from "./pages/GameSummary";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
+import CourtSelection from "./pages/CourtSelection";
 
 const queryClient = new QueryClient();
 
