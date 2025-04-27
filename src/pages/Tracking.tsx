@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, Camera, Plus, Minus } from 'lucide-react';
+import { Check, X, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import { toast } from '@/components/ui/use-toast';
 import { Shot, GameStats } from '@/lib/types';
 import StatsCard from '@/components/StatsCard';
+import CameraFeed from '@/components/CameraFeed';
 
 const Tracking = () => {
   const navigate = useNavigate();
@@ -154,6 +154,14 @@ const Tracking = () => {
     }
   };
 
+  const handleCameraReady = () => {
+    setIsRecording(true);
+    toast({
+      title: "Tracking Started",
+      description: "Shot tracking is now active",
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-800">
       <Header 
@@ -164,14 +172,9 @@ const Tracking = () => {
       />
       
       <div className="flex-1 relative flex flex-col">
-        {/* Camera feed placeholder */}
-        <div className="absolute inset-0 bg-black">
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center text-white">
-              <Camera size={48} className="mx-auto mb-4 opacity-50" />
-              <p className="opacity-75">Camera feed unavailable in prototype</p>
-            </div>
-          </div>
+        {/* Replace camera placeholder with actual camera feed */}
+        <div className="absolute inset-0">
+          <CameraFeed onCameraReady={handleCameraReady} />
         </div>
         
         {/* Shot animation */}
