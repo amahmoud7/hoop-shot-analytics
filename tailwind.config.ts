@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				court: {
+					DEFAULT: '#7CB518', // Basketball court green
+					lines: '#FFFFFF',
+					key: '#FDB833', // Paint area color
+				},
+				basketball: '#E85D04', // Basketball orange
+				navy: '#1A2B50', // Deep navy blue
+				teal: '#05DBF2', // Analytics accent color
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +93,45 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'bounce-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'scale(0.8)'
+					},
+					'70%': {
+						opacity: '1',
+						transform: 'scale(1.05)'
+					},
+					'100%': {
+						transform: 'scale(1)'
+					}
+				},
+				'fade-in': {
+					from: { opacity: '0' },
+					to: { opacity: '1' }
+				},
+				'shot-arc': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(0) translateX(0)'
+					},
+					'50%': {
+						opacity: '1',
+						transform: 'translateY(-50px) translateX(50px)'
+					},
+					'100%': {
+						opacity: '0',
+						transform: 'translateY(0) translateX(100px)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'bounce-in': 'bounce-in 0.5s ease-out',
+				'fade-in': 'fade-in 0.3s ease-in',
+				'shot-arc': 'shot-arc 1.2s ease-in-out'
 			}
 		}
 	},
