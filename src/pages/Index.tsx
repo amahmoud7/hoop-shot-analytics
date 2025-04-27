@@ -14,7 +14,7 @@ const Index = () => {
           <h1 className="text-3xl font-bold mb-2">CourtVision</h1>
           <p className="text-gray-300 mb-6">Track your shots. Improve your game.</p>
           
-          <Link to="/tracking">
+          <Link to="/court-selection">
             <Button className="w-full bg-basketball hover:bg-orange-600 text-white flex items-center justify-center gap-2 h-12 rounded-xl">
               <Camera size={20} />
               <span className="font-medium">Start Tracking</span>

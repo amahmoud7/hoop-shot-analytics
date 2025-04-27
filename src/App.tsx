@@ -22,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/calibration" element={<Calibration />} />
+          <Route path="/court-selection" element={<CourtSelection />} />
           <Route path="/tracking" element={<Tracking />} />
           <Route path="/game-summary" element={<GameSummary />} />
           <Route path="/history" element={<History />} />
