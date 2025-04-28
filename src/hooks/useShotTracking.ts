@@ -57,10 +57,16 @@ export const useShotTracking = () => {
     const twoPointMade = currentShots.filter(shot => !shot.isThreePoint && shot.isMade).length;
     const threePointMade = currentShots.filter(shot => shot.isThreePoint && shot.isMade).length;
     
+    // Calculate missed shots
+    const missedShots = currentShots.length - madeShots;
+    
+    // Calculate total points scored
+    const pointsScored = (twoPointMade * 2) + (threePointMade * 3);
+    
     return {
       totalShots: currentShots.length,
       madeShots: madeShots,
-      missedShots: currentShots.length - madeShots,
+      missedShots: missedShots, // Add the missing property
       twoPointAttempts: currentShots.filter(shot => !shot.isThreePoint).length,
       twoPointMade: twoPointMade,
       threePointAttempts: currentShots.filter(shot => shot.isThreePoint).length,
@@ -71,7 +77,7 @@ export const useShotTracking = () => {
         (twoPointMade / currentShots.filter(shot => !shot.isThreePoint).length) * 100 : 0,
       threePointPercentage: currentShots.filter(shot => shot.isThreePoint).length > 0 ?
         (threePointMade / currentShots.filter(shot => shot.isThreePoint).length) * 100 : 0,
-      pointsScored: (twoPointMade * 2) + (threePointMade * 3)
+      pointsScored: pointsScored // Add the missing property
     };
   };
 
