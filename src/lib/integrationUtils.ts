@@ -3,7 +3,7 @@
  * Utility functions for integrating CourtVision with Hoop Shot Analytics
  */
 
-import { Shot as CVShot } from '../court-vision-integration/src/lib/detection/types';
+import { Shot as CVShot } from '../../court-vision-integration/src/lib/detection/types';
 import { Shot as AppShot } from './types';
 
 /**
