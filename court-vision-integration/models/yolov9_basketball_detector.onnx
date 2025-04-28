@@ -1,0 +1,5 @@
+# Placeholder for YOLOv9 Basketball Detector ONNX Model
+
+This file is a placeholder. Replace it with the actual `yolov9_basketball_detector.onnx` model file.
+
+Place this model file in the `public/models/` directory of your target Hoop Shot Analytics project.
