@@ -1,12 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatsCard from '@/components/StatsCard';
 import ShotChart from '@/components/ShotChart';
-import { useAnalytics, useDataStorage } from '@/lib/courtVision';
-import { GameStats } from '@/lib/types';
+import { useAnalytics, useDataStorage, ShotStats } from '@/lib/courtVision';
 
 const Analytics = () => {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
@@ -16,7 +14,7 @@ const Analytics = () => {
   });
   
   const [gameData, setGameData] = useState<any>(null);
-  const [stats, setStats] = useState<GameStats | null>(null);
+  const [stats, setStats] = useState<ShotStats | null>(null);
   
   useEffect(() => {
     // Load the games list on component mount

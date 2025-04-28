@@ -1,20 +1,24 @@
 
 import React from 'react';
-import { Plus, Minus, Check } from 'lucide-react';
+import { Camera, Play, Stop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatsCard from '@/components/StatsCard';
-import { GameStats } from '@/lib/types';
+import { ShotStats } from '@/lib/courtVision';
 
 interface TrackingControlsProps {
   isRecording: boolean;
-  stats: GameStats;
+  stats: ShotStats;
   onToggleRecording: () => void;
+  cameraEnabled?: boolean;
+  onRequestCamera?: () => void;
 }
 
 const TrackingControls: React.FC<TrackingControlsProps> = ({
   isRecording,
   stats,
-  onToggleRecording
+  onToggleRecording,
+  cameraEnabled = false,
+  onRequestCamera
 }) => {
   return (
     <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col">
@@ -24,27 +28,29 @@ const TrackingControls: React.FC<TrackingControlsProps> = ({
         </div>
       )}
       
-      <div className="flex justify-between">
-        <Button 
-          variant="ghost" 
-          className="bg-white text-navy hover:bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center"
-        >
-          <Plus size={24} />
-        </Button>
+      <div className="flex justify-between items-center">
+        {/* Left button - kept empty for now */}
+        <div className="w-12 h-12"></div>
         
-        <Button
-          className={`w-20 h-20 rounded-full ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-basketball hover:bg-orange-600'} text-white flex items-center justify-center`}
-          onClick={onToggleRecording}
-        >
-          <Check size={32} />
-        </Button>
+        {/* Center button - main action */}
+        {!cameraEnabled ? (
+          <Button
+            className="w-20 h-20 rounded-full bg-basketball hover:bg-orange-600 text-white flex items-center justify-center"
+            onClick={onRequestCamera}
+          >
+            <Camera size={32} />
+          </Button>
+        ) : (
+          <Button
+            className={`w-20 h-20 rounded-full ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-basketball hover:bg-orange-600'} text-white flex items-center justify-center`}
+            onClick={onToggleRecording}
+          >
+            {isRecording ? <Stop size={32} /> : <Play size={32} />}
+          </Button>
+        )}
         
-        <Button 
-          variant="ghost" 
-          className="bg-white text-navy hover:bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center"
-        >
-          <Minus size={24} />
-        </Button>
+        {/* Right button - kept empty for now */}
+        <div className="w-12 h-12"></div>
       </div>
     </div>
   );

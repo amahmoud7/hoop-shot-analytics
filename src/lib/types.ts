@@ -11,6 +11,7 @@ export interface Shot {
 export interface GameStats {
   totalShots: number;
   madeShots: number;
+  missedShots: number;
   twoPointAttempts: number;
   twoPointMade: number;
   threePointAttempts: number;
@@ -18,6 +19,7 @@ export interface GameStats {
   shotPercentage: number;
   twoPointPercentage: number;
   threePointPercentage: number;
+  pointsScored: number;
 }
 
 export interface Game {

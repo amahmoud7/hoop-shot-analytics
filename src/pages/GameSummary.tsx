@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Share2, Download, ArrowLeft } from 'lucide-react';
@@ -7,7 +6,8 @@ import Header from '@/components/Header';
 import CourtView from '@/components/CourtView';
 import ShotChart from '@/components/ShotChart';
 import StatsCard from '@/components/StatsCard';
-import { Shot, GameStats } from '@/lib/types';
+import { Shot } from '@/lib/types';
+import { ShotStats } from '@/lib/courtVision';
 
 const GameSummary = () => {
   const location = useLocation();
@@ -17,9 +17,10 @@ const GameSummary = () => {
   const { shots = [], stats = null, duration = 0, score = { team1: 0, team2: 0 } } = location.state || {};
   
   // Mock stats if none provided
-  const gameStats: GameStats = stats || {
+  const gameStats: ShotStats = stats || {
     totalShots: shots.length,
     madeShots: shots.filter((shot: Shot) => shot.isMade).length,
+    missedShots: shots.length - shots.filter((shot: Shot) => shot.isMade).length,
     twoPointAttempts: shots.filter((shot: Shot) => !shot.isThreePoint).length,
     twoPointMade: shots.filter((shot: Shot) => !shot.isThreePoint && shot.isMade).length,
     threePointAttempts: shots.filter((shot: Shot) => shot.isThreePoint).length,
@@ -29,6 +30,8 @@ const GameSummary = () => {
       (shots.filter((shot: Shot) => !shot.isThreePoint && shot.isMade).length / shots.filter((shot: Shot) => !shot.isThreePoint).length) * 100 : 0,
     threePointPercentage: shots.filter((shot: Shot) => shot.isThreePoint).length > 0 ?
       (shots.filter((shot: Shot) => shot.isThreePoint && shot.isMade).length / shots.filter((shot: Shot) => shot.isThreePoint).length) * 100 : 0,
+    pointsScored: (shots.filter((shot: Shot) => !shot.isThreePoint && shot.isMade).length * 2) + 
+                 (shots.filter((shot: Shot) => shot.isThreePoint && shot.isMade).length * 3)
   };
   
   // Format duration

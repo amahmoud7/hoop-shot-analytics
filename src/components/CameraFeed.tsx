@@ -1,51 +1,107 @@
 
 import React, { useEffect, useRef, useState } from 'react';
+import { Camera, CameraOff, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { getCameraStream } from '../../court-vision-integration/src/lib/browser-compatibility';
+import { toast } from '@/components/ui/use-toast';
 
 interface CameraFeedProps {
   onCameraReady?: () => void;
   onDetection?: (detection: any) => void;
+  autoStart?: boolean;
 }
 
 const CameraFeed: React.FC<CameraFeedProps> = ({
   onCameraReady,
-  onDetection
+  onDetection,
+  autoStart = false
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraStatus, setCameraStatus] = useState<'notRequested' | 'requesting' | 'granted' | 'denied'>('notRequested');
   
+  // Request camera access
+  const requestCameraAccess = async () => {
+    if (cameraStatus === 'requesting') return;
+    
+    setCameraStatus('requesting');
+    setIsLoading(true);
+    
+    try {
+      const stream = await getCameraStream({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+      
+      if (stream && videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraStatus('granted');
+        setCameraEnabled(true);
+        toast({
+          title: "Camera Ready",
+          description: "Camera access enabled successfully",
+        });
+        
+        if (onCameraReady) {
+          onCameraReady();
+        }
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setCameraStatus('denied');
+      toast({
+        title: "Camera Access Denied",
+        description: "Please enable camera access in browser settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Auto-start camera if enabled
+  useEffect(() => {
+    if (autoStart && cameraStatus === 'notRequested') {
+      requestCameraAccess();
+    }
+  }, [autoStart]);
+
   // Placeholder for detection simulation (temporary)
   useEffect(() => {
-    if (!isLoading && onDetection && Math.random() > 0.7) {
+    if (cameraEnabled && onDetection) {
       // Simulate a detection event for demonstration purposes
       // This will be replaced by actual AI detection
-      const simulatedDetection = {
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        radius: 5 + Math.random() * 3,
-        confidence: 0.7 + Math.random() * 0.3,
-        timestamp: Date.now()
-      };
-      
-      // Send simulated detection periodically
       const detectionInterval = setInterval(() => {
-        onDetection(simulatedDetection);
+        if (Math.random() > 0.7) {
+          const simulatedDetection = {
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+            radius: 5 + Math.random() * 3,
+            confidence: 0.7 + Math.random() * 0.3,
+            timestamp: Date.now()
+          };
+          
+          onDetection(simulatedDetection);
+        }
       }, 1000);
       
       return () => clearInterval(detectionInterval);
     }
-  }, [isLoading, onDetection]);
+  }, [cameraEnabled, onDetection]);
 
+  // Cleanup camera on unmount
   useEffect(() => {
-    // Simulate camera initialization
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      if (onCameraReady) {
-        onCameraReady();
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
       }
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, [onCameraReady]);
+    };
+  }, []);
 
   return (
     <div className="relative w-full h-full bg-black">
@@ -54,13 +110,43 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
           <div className="text-white">Initializing camera...</div>
         </div>
       ) : (
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          autoPlay
-          playsInline
-          muted
-        />
+        <>
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            autoPlay
+            playsInline
+            muted
+          />
+          
+          {!cameraEnabled && (
+            <div className="absolute inset-0 flex items-center justify-center flex-col gap-3 bg-black bg-opacity-70">
+              {cameraStatus === 'denied' ? (
+                <>
+                  <CameraOff size={48} className="text-red-500" />
+                  <p className="text-white text-center px-4">
+                    Camera access denied. Please enable camera access in your browser settings.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Camera size={48} className="text-white" />
+                  <p className="text-white mb-4">
+                    Enable camera to start tracking shots
+                  </p>
+                  <Button 
+                    onClick={requestCameraAccess} 
+                    disabled={cameraStatus === 'requesting'}
+                    className="bg-basketball hover:bg-orange-600"
+                  >
+                    <Camera className="mr-2" />
+                    {cameraStatus === 'requesting' ? 'Requesting Access...' : 'Enable Camera'}
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

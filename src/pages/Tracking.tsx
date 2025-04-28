@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 import Header from '@/components/Header';
@@ -14,24 +14,19 @@ const Tracking = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [cameraEnabled, setCameraEnabled] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   const { 
     shots, 
     score, 
     shotAnimation, 
-    processBallDetection, 
+    mockShotDetection, 
     calculateStats,
     resetTracking
-  } = useShotTracking({
-    onShotDetected: (shot) => {
-      toast({
-        title: shot.isMade ? `${shot.isThreePoint ? "3" : "2"} Points!` : "Shot missed",
-        description: `${shot.isMade ? "Made" : "Missed"} from ${shot.isThreePoint ? "three-point range" : "two-point range"}`,
-      });
-    }
-  });
+  } = useShotTracking();
   
-  const { saveGameWithAnalytics } = useDataStorage();
+  const { saveGame } = useDataStorage();
 
   useEffect(() => {
     let interval: number;
@@ -50,6 +45,14 @@ const Tracking = () => {
   }, [isRecording]);
 
   const toggleRecording = () => {
+    if (!cameraEnabled) {
+      toast({
+        title: "Camera Required",
+        description: "Please enable camera access first",
+      });
+      return;
+    }
+    
     if (!isRecording) {
       setIsRecording(true);
       resetTracking();
@@ -63,12 +66,12 @@ const Tracking = () => {
       
       // For demo/testing, save the session with a unique ID
       const gameId = `game_${Date.now()}`;
-      saveGameWithAnalytics(gameId, {
-        gameId,
-        timestamp: Date.now(),
+      saveGame(gameId, {
+        id: gameId,
+        date: new Date().toISOString(),
+        duration: elapsedTime,
+        shots,
         stats: calculateStats(shots),
-        shotChart: { shots },
-        heatmap: { makes: [], misses: [], allShots: [] }
       });
       
       navigate('/game-summary', { 
@@ -84,15 +87,23 @@ const Tracking = () => {
 
   const handleBallDetection = (detection: any) => {
     if (isRecording) {
-      processBallDetection(detection);
+      // In a real implementation, this would process the ball detection
+      // For now, we'll use the mock function
+      mockShotDetection();
     }
   };
 
   const handleCameraReady = () => {
+    setCameraEnabled(true);
     toast({
       title: "Camera Ready",
       description: "Press start to begin tracking",
     });
+  };
+  
+  const requestCameraAccess = () => {
+    // This function is passed to the TrackingControls
+    // The actual camera request happens in CameraFeed component
   };
 
   return (
@@ -109,6 +120,7 @@ const Tracking = () => {
           <CameraFeed 
             onCameraReady={handleCameraReady} 
             onDetection={handleBallDetection}
+            autoStart={false}
           />
         </div>
         
@@ -125,6 +137,8 @@ const Tracking = () => {
           isRecording={isRecording}
           stats={calculateStats(shots)}
           onToggleRecording={toggleRecording}
+          cameraEnabled={cameraEnabled}
+          onRequestCamera={requestCameraAccess}
         />
       </div>
     </div>
