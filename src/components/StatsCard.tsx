@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { GameStats } from '@/lib/types';
+import { ShotStats } from '@/lib/courtVision';
 
 interface StatsCardProps {
-  stats: GameStats;
+  stats: ShotStats;
   compact?: boolean;
   className?: string;
 }
@@ -68,7 +68,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
             <div className="flex justify-between">
               <span className="text-sm font-medium">Points</span>
               <span className="font-bold text-navy">
-                {(stats.twoPointMade * 2) + (stats.threePointMade * 3)}
+                {stats.pointsScored}
               </span>
             </div>
           </div>

@@ -6,13 +6,27 @@
  */
 
 // Re-export core detection functionality
-export {
+export type { 
   BallDetection,
   Shot,
   ShotTrajectory,
-  TrajectoryPoint,
-  ShotStats
+  TrajectoryPoint 
 } from '../../court-vision-integration/src/lib/detection/types';
+
+// Define ShotStats type based on GameStats from our app
+export interface ShotStats {
+  totalShots: number;
+  madeShots: number;
+  missedShots: number;
+  twoPointAttempts: number;
+  twoPointMade: number;
+  threePointAttempts: number;
+  threePointMade: number;
+  shotPercentage: number;
+  twoPointPercentage: number;
+  threePointPercentage: number;
+  pointsScored: number;
+}
 
 // Re-export analytics functionality
 export {

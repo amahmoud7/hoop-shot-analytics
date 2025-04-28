@@ -7,7 +7,7 @@ import CameraFeed from '@/components/CameraFeed';
 import ShotAnimationOverlay from '@/components/ShotAnimationOverlay';
 import TrackingControls from '@/components/TrackingControls';
 import TrackerOverlay from '@/components/TrackerOverlay';
-import { useShotTracking } from '@/lib/courtVision';
+import { useShotTracking, ShotStats } from '@/lib/courtVision';
 import { useDataStorage } from '@/lib/courtVision';
 
 const Tracking = () => {
