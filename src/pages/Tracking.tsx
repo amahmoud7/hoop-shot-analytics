@@ -7,7 +7,7 @@ import CameraFeed from '@/components/CameraFeed';
 import ShotAnimationOverlay from '@/components/ShotAnimationOverlay';
 import TrackingControls from '@/components/TrackingControls';
 import TrackerOverlay from '@/components/TrackerOverlay';
-import { useShotTracking, ShotStats } from '@/lib/courtVision';
+import { useShotTracking, ShotStats, BallDetection } from '@/lib/courtVision';
 import { useDataStorage } from '@/lib/courtVision';
 import { Shot } from '@/lib/types';
 
@@ -28,7 +28,8 @@ const Tracking = () => {
     isTracking
   } = useShotTracking();
   
-  const { saveGameData } = useDataStorage();
+  // Get the correct methods from useDataStorage
+  const { saveGameWithAnalytics } = useDataStorage();
 
   useEffect(() => {
     let interval: number;
@@ -48,12 +49,13 @@ const Tracking = () => {
 
   // Added function to simulate shot detection for demo purposes
   const mockShotDetection = () => {
-    // Create a mock ball detection
-    const mockDetection = {
+    // Create a mock ball detection with all required properties
+    const mockDetection: BallDetection = {
       x: Math.random() * 640,
       y: Math.random() * 480,
       timestamp: Date.now(),
-      confidence: 0.9
+      confidence: 0.9,
+      radius: 15 // Add the missing radius property
     };
     
     // Process the mock detection
@@ -79,20 +81,28 @@ const Tracking = () => {
     } else {
       setIsRecording(false);
       
+      // Calculate stats with all required properties
+      const gameStats = calculateStats(shots as Shot[]);
+      
       // For demo/testing, save the session with a unique ID
       const gameId = `game_${Date.now()}`;
-      saveGameData({
-        id: gameId,
-        date: new Date().toISOString(),
-        duration: elapsedTime,
-        shots: shots,
-        stats: calculateStats(shots as Shot[]),
+      
+      // Use the correct method from useDataStorage
+      saveGameWithAnalytics(gameId, {
+        analytics: {
+          gameId,
+          timestamp: Date.now(),
+          stats: gameStats,
+          shotChart: { shots: shots as Shot[] },
+          heatmap: { makes: [], misses: [], allShots: [] }
+        },
+        shots: shots as Shot[],
       });
       
       navigate('/game-summary', { 
         state: { 
           shots,
-          stats: calculateStats(shots as Shot[]),
+          stats: gameStats,
           duration: elapsedTime,
           score
         }
