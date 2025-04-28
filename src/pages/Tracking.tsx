@@ -87,16 +87,13 @@ const Tracking = () => {
       // For demo/testing, save the session with a unique ID
       const gameId = `game_${Date.now()}`;
       
-      // Use the correct method from useDataStorage
+      // Use the correct method from useDataStorage - passing GameAnalytics directly, not wrapped
       saveGameWithAnalytics(gameId, {
-        analytics: {
-          gameId,
-          timestamp: Date.now(),
-          stats: gameStats,
-          shotChart: { shots: shots as Shot[] },
-          heatmap: { makes: [], misses: [], allShots: [] }
-        },
-        shots: shots as Shot[],
+        gameId,
+        timestamp: Date.now(),
+        stats: gameStats,
+        shotChart: { shots: shots as Shot[] },
+        heatmap: { makes: [], misses: [], allShots: [] }
       });
       
       navigate('/game-summary', { 
