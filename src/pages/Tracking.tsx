@@ -9,6 +9,7 @@ import TrackingControls from '@/components/TrackingControls';
 import TrackerOverlay from '@/components/TrackerOverlay';
 import { useShotTracking, ShotStats } from '@/lib/courtVision';
 import { useDataStorage } from '@/lib/courtVision';
+import { Shot } from '@/lib/types';
 
 const Tracking = () => {
   const navigate = useNavigate();
@@ -21,12 +22,13 @@ const Tracking = () => {
     shots, 
     score, 
     shotAnimation, 
-    mockShotDetection, 
+    processBallDetection,
     calculateStats,
-    resetTracking
+    setRimPosition,
+    isTracking
   } = useShotTracking();
   
-  const { saveGame } = useDataStorage();
+  const { saveGameData } = useDataStorage();
 
   useEffect(() => {
     let interval: number;
@@ -44,6 +46,20 @@ const Tracking = () => {
     };
   }, [isRecording]);
 
+  // Added function to simulate shot detection for demo purposes
+  const mockShotDetection = () => {
+    // Create a mock ball detection
+    const mockDetection = {
+      x: Math.random() * 640,
+      y: Math.random() * 480,
+      timestamp: Date.now(),
+      confidence: 0.9
+    };
+    
+    // Process the mock detection
+    processBallDetection(mockDetection);
+  };
+
   const toggleRecording = () => {
     if (!cameraEnabled) {
       toast({
@@ -55,7 +71,6 @@ const Tracking = () => {
     
     if (!isRecording) {
       setIsRecording(true);
-      resetTracking();
       setElapsedTime(0);
       toast({
         title: "Recording Started",
@@ -66,18 +81,18 @@ const Tracking = () => {
       
       // For demo/testing, save the session with a unique ID
       const gameId = `game_${Date.now()}`;
-      saveGame(gameId, {
+      saveGameData({
         id: gameId,
         date: new Date().toISOString(),
         duration: elapsedTime,
-        shots,
-        stats: calculateStats(shots),
+        shots: shots,
+        stats: calculateStats(shots as Shot[]),
       });
       
       navigate('/game-summary', { 
         state: { 
           shots,
-          stats: calculateStats(shots),
+          stats: calculateStats(shots as Shot[]),
           duration: elapsedTime,
           score
         }
@@ -129,13 +144,13 @@ const Tracking = () => {
         <TrackerOverlay
           isRecording={isRecording}
           elapsedTime={elapsedTime}
-          shots={shots}
+          shots={shots as Shot[]}
           score={score}
         />
         
         <TrackingControls 
           isRecording={isRecording}
-          stats={calculateStats(shots)}
+          stats={calculateStats(shots as Shot[])}
           onToggleRecording={toggleRecording}
           cameraEnabled={cameraEnabled}
           onRequestCamera={requestCameraAccess}

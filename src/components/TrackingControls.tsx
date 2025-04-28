@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Camera, Play, Stop } from 'lucide-react';
+import { Camera, Play, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatsCard from '@/components/StatsCard';
 import { ShotStats } from '@/lib/courtVision';
@@ -45,7 +45,7 @@ const TrackingControls: React.FC<TrackingControlsProps> = ({
             className={`w-20 h-20 rounded-full ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-basketball hover:bg-orange-600'} text-white flex items-center justify-center`}
             onClick={onToggleRecording}
           >
-            {isRecording ? <Stop size={32} /> : <Play size={32} />}
+            {isRecording ? <Square size={32} /> : <Play size={32} />}
           </Button>
         )}
         

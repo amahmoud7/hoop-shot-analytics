@@ -19,13 +19,15 @@ const History = () => {
       stats: {
         totalShots: 32,
         madeShots: 18,
+        missedShots: 14, // Added missing property
         twoPointAttempts: 22,
         twoPointMade: 14,
         threePointAttempts: 10,
         threePointMade: 4,
         shotPercentage: 56.3,
         twoPointPercentage: 63.6,
-        threePointPercentage: 40.0
+        threePointPercentage: 40.0,
+        pointsScored: 42 // Added missing property
       },
       location: "Downtown Rec Center"
     },
@@ -37,13 +39,15 @@ const History = () => {
       stats: {
         totalShots: 45,
         madeShots: 21,
+        missedShots: 24, // Added missing property
         twoPointAttempts: 31,
         twoPointMade: 17,
         threePointAttempts: 14,
         threePointMade: 4,
         shotPercentage: 46.7,
         twoPointPercentage: 54.8,
-        threePointPercentage: 28.6
+        threePointPercentage: 28.6,
+        pointsScored: 42 // Added missing property
       },
       location: "YMCA Court 3"
     },
@@ -55,13 +59,15 @@ const History = () => {
       stats: {
         totalShots: 28,
         madeShots: 16,
+        missedShots: 12, // Added missing property
         twoPointAttempts: 18,
         twoPointMade: 12,
         threePointAttempts: 10,
         threePointMade: 4,
         shotPercentage: 57.1,
         twoPointPercentage: 66.7,
-        threePointPercentage: 40.0
+        threePointPercentage: 40.0,
+        pointsScored: 36 // Added missing property
       },
       location: "Home Driveway"
     }
