@@ -12,7 +12,7 @@ export {
   ShotTrajectory,
   TrajectoryPoint,
   ShotStats
-} from './court-vision-integration/src/lib/detection/types';
+} from '../court-vision-integration/src/lib/detection/types';
 
 // Re-export analytics functionality
 export {
@@ -20,7 +20,7 @@ export {
   calculateShotStats,
   generateHeatmapData,
   generateShotChartData
-} from './court-vision-integration/src/lib/analytics';
+} from '../court-vision-integration/src/lib/analytics';
 
 // Re-export storage functionality
 export {
@@ -31,14 +31,14 @@ export {
   loadGame,
   getGamesList,
   deleteGame
-} from './court-vision-integration/src/lib/storage';
+} from '../court-vision-integration/src/lib/storage';
 
 // Re-export ball detection, court calibration and shot tracking
 export {
   useBallDetection,
   useCourtCalibration,
   useShotTracking
-} from './court-vision-integration/src/lib/detection';
+} from '../court-vision-integration/src/lib/detection';
 
 // Export integration utilities
 export { default as integrationUtils } from './integrationUtils';
