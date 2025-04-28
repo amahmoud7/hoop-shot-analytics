@@ -1,137 +1,148 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatsCard from '@/components/StatsCard';
 import ShotChart from '@/components/ShotChart';
-import { BarChart, ResponsiveContainer, XAxis, YAxis, Bar, Tooltip } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
-import { Game, Shot } from '@/lib/types';
+import { useAnalytics, useDataStorage } from '@/lib/courtVision';
+import { GameStats } from '@/lib/types';
 
 const Analytics = () => {
-  // Mock data for demonstration - replace with actual data fetching
-  const mockGames: Game[] = [
-    {
-      id: "1",
-      date: new Date().toISOString(),
-      duration: 600,
-      shots: [],
-      stats: {
-        totalShots: 50,
-        madeShots: 30,
-        twoPointAttempts: 35,
-        twoPointMade: 20,
-        threePointAttempts: 15,
-        threePointMade: 10,
-        shotPercentage: 60,
-        twoPointPercentage: 57.1,
-        threePointPercentage: 66.7
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const { savedGames, loadSavedGame } = useDataStorage();
+  const { generateStats, generateShotChart, generateHeatmap } = useAnalytics({
+    autoUpdate: false
+  });
+  
+  const [gameData, setGameData] = useState<any>(null);
+  const [stats, setStats] = useState<GameStats | null>(null);
+  
+  useEffect(() => {
+    // Load the games list on component mount
+    if (savedGames.length > 0 && !selectedGameId) {
+      setSelectedGameId(savedGames[0]);
+    }
+  }, [savedGames]);
+  
+  useEffect(() => {
+    if (selectedGameId) {
+      const data = loadSavedGame(selectedGameId);
+      setGameData(data);
+      
+      if (data && data.shots) {
+        const shotStats = generateStats();
+        setStats(shotStats);
       }
     }
-  ];
-
-  const shotsByZone = [
-    { zone: 'Paint', attempts: 25, makes: 15 },
-    { zone: 'Mid-Range', attempts: 20, makes: 10 },
-    { zone: 'Three Point', attempts: 15, makes: 8 },
-  ];
-
+  }, [selectedGameId, loadSavedGame, generateStats]);
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header title="Analytics" showBack={true} />
+    <div className="min-h-screen bg-gray-100">
+      <Header title="Analytics Dashboard" />
       
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+      <div className="container p-4 mx-auto">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="details">Shot Details</TabsTrigger>
+            <TabsTrigger value="shots">Shot Details</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* Stats Overview */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="col-span-1">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Shots</CardTitle>
+          
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Session Stats</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{mockGames[0].stats.totalShots}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {mockGames[0].stats.shotPercentage.toFixed(1)}% shooting
-                  </p>
+                  {stats ? (
+                    <StatsCard stats={stats} />
+                  ) : (
+                    <div className="text-center p-4 text-gray-500">
+                      No stats available. Complete a tracking session first.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
-              <Card className="col-span-1">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">3PT Percentage</CardTitle>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Shot Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {mockGames[0].stats.threePointPercentage.toFixed(1)}%
+                  <div className="h-[300px]">
+                    {gameData?.shots?.length > 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <div className="bg-green-100 text-green-800 px-2 py-1 rounded-md mb-2 text-sm">
+                          {gameData.shots.filter(s => s.isMade).length} Made
+                        </div>
+                        <div className="bg-red-100 text-red-800 px-2 py-1 rounded-md text-sm">
+                          {gameData.shots.filter(s => !s.isMade).length} Missed
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-400">
+                        No shot data available
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {mockGames[0].stats.threePointMade}/{mockGames[0].stats.threePointAttempts} made
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="col-span-1">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">2PT Percentage</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {mockGames[0].stats.twoPointPercentage.toFixed(1)}%
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {mockGames[0].stats.twoPointMade}/{mockGames[0].stats.twoPointAttempts} made
-                  </p>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Shot Distribution Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Shot Distribution</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={shotsByZone}>
-                    <XAxis dataKey="zone" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="attempts" fill="#8884d8" name="Attempts" />
-                    <Bar dataKey="makes" fill="#82ca9d" name="Makes" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
           </TabsContent>
-
-          <TabsContent value="details" className="space-y-6">
+          
+          <TabsContent value="shots" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Shot Chart</CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
-                <ShotChart shots={mockGames[0].shots} width={400} height={300} />
+              <CardContent>
+                {gameData?.shots?.length > 0 ? (
+                  <div className="flex justify-center">
+                    <ShotChart shots={gameData.shots} width={400} height={300} />
+                  </div>
+                ) : (
+                  <div className="text-center p-8 text-gray-500">
+                    No shot data available. Complete a tracking session first.
+                  </div>
+                )}
               </CardContent>
             </Card>
-
+            
             <Card>
               <CardHeader>
-                <CardTitle>Detailed Stats</CardTitle>
+                <CardTitle>Shot Stats</CardTitle>
               </CardHeader>
               <CardContent>
-                <StatsCard stats={mockGames[0].stats} />
+                {stats ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div className="bg-white rounded-lg p-4 shadow">
+                      <p className="text-sm text-gray-500">Total</p>
+                      <p className="text-2xl font-bold">{stats.totalShots}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 shadow">
+                      <p className="text-sm text-gray-500">Made</p>
+                      <p className="text-2xl font-bold text-green-600">{stats.madeShots}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 shadow">
+                      <p className="text-sm text-gray-500">FG%</p>
+                      <p className="text-2xl font-bold">{stats.shotPercentage.toFixed(1)}%</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 shadow">
+                      <p className="text-sm text-gray-500">3PT%</p>
+                      <p className="text-2xl font-bold">{stats.threePointPercentage.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 text-gray-500">
+                    No stats available. Complete a tracking session first.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
     </div>
   );
 };

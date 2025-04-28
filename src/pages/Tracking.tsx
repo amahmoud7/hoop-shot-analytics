@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
@@ -6,13 +7,31 @@ import CameraFeed from '@/components/CameraFeed';
 import ShotAnimationOverlay from '@/components/ShotAnimationOverlay';
 import TrackingControls from '@/components/TrackingControls';
 import TrackerOverlay from '@/components/TrackerOverlay';
-import { useShotTracking } from '@/hooks/useShotTracking';
+import { useShotTracking } from '@/lib/courtVision';
+import { useDataStorage } from '@/lib/courtVision';
 
 const Tracking = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
-  const { shots, score, shotAnimation, mockShotDetection, calculateStats } = useShotTracking();
+  
+  const { 
+    shots, 
+    score, 
+    shotAnimation, 
+    processBallDetection, 
+    calculateStats,
+    resetTracking
+  } = useShotTracking({
+    onShotDetected: (shot) => {
+      toast({
+        title: shot.isMade ? `${shot.isThreePoint ? "3" : "2"} Points!` : "Shot missed",
+        description: `${shot.isMade ? "Made" : "Missed"} from ${shot.isThreePoint ? "three-point range" : "two-point range"}`,
+      });
+    }
+  });
+  
+  const { saveGameWithAnalytics } = useDataStorage();
 
   useEffect(() => {
     let interval: number;
@@ -30,40 +49,27 @@ const Tracking = () => {
     };
   }, [isRecording]);
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const toggleRecording = () => {
     if (!isRecording) {
       setIsRecording(true);
+      resetTracking();
+      setElapsedTime(0);
       toast({
         title: "Recording Started",
         description: "Tracking basketball shots in real-time",
       });
-      
-      setTimeout(() => {
-        mockShotDetection();
-      }, 3000);
-      
-      const shotInterval = setInterval(() => {
-        if (Math.random() > 0.3) {
-          mockShotDetection();
-        }
-      }, 8000);
-      
-      window.localStorage.setItem('shotIntervalId', shotInterval.toString());
-      
     } else {
       setIsRecording(false);
       
-      const intervalId = window.localStorage.getItem('shotIntervalId');
-      if (intervalId) {
-        clearInterval(parseInt(intervalId));
-        window.localStorage.removeItem('shotIntervalId');
-      }
+      // For demo/testing, save the session with a unique ID
+      const gameId = `game_${Date.now()}`;
+      saveGameWithAnalytics(gameId, {
+        gameId,
+        timestamp: Date.now(),
+        stats: calculateStats(shots),
+        shotChart: { shots },
+        heatmap: { makes: [], misses: [], allShots: [] }
+      });
       
       navigate('/game-summary', { 
         state: { 
@@ -76,11 +82,16 @@ const Tracking = () => {
     }
   };
 
+  const handleBallDetection = (detection: any) => {
+    if (isRecording) {
+      processBallDetection(detection);
+    }
+  };
+
   const handleCameraReady = () => {
-    setIsRecording(true);
     toast({
-      title: "Tracking Started",
-      description: "Shot tracking is now active",
+      title: "Camera Ready",
+      description: "Press start to begin tracking",
     });
   };
 
@@ -95,7 +106,10 @@ const Tracking = () => {
       
       <div className="flex-1 relative flex flex-col">
         <div className="absolute inset-0">
-          <CameraFeed onCameraReady={handleCameraReady} />
+          <CameraFeed 
+            onCameraReady={handleCameraReady} 
+            onDetection={handleBallDetection}
+          />
         </div>
         
         <ShotAnimationOverlay {...shotAnimation} />

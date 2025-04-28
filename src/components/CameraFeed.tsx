@@ -1,96 +1,67 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, CameraOff } from 'lucide-react';
-import { Button } from './ui/button';
-import { toast } from './ui/use-toast';
 
 interface CameraFeedProps {
   onCameraReady?: () => void;
+  onDetection?: (detection: any) => void;
 }
 
-const CameraFeed: React.FC<CameraFeedProps> = ({ onCameraReady }) => {
+const CameraFeed: React.FC<CameraFeedProps> = ({
+  onCameraReady,
+  onDetection
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      });
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Placeholder for detection simulation (temporary)
+  useEffect(() => {
+    if (!isLoading && onDetection && Math.random() > 0.7) {
+      // Simulate a detection event for demonstration purposes
+      // This will be replaced by actual AI detection
+      const simulatedDetection = {
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        radius: 5 + Math.random() * 3,
+        confidence: 0.7 + Math.random() * 0.3,
+        timestamp: Date.now()
+      };
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setIsStreaming(true);
-        onCameraReady?.();
-        
-        toast({
-          title: "Camera Started",
-          description: "The camera feed is now active",
-        });
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      toast({
-        variant: "destructive",
-        title: "Camera Error",
-        description: "Unable to access the camera. Please check permissions.",
-      });
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-      setIsStreaming(false);
+      // Send simulated detection periodically
+      const detectionInterval = setInterval(() => {
+        onDetection(simulatedDetection);
+      }, 1000);
       
-      toast({
-        title: "Camera Stopped",
-        description: "The camera feed has been stopped",
-      });
+      return () => clearInterval(detectionInterval);
     }
-  };
+  }, [isLoading, onDetection]);
 
   useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
+    // Simulate camera initialization
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      if (onCameraReady) {
+        onCameraReady();
+      }
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, [onCameraReady]);
 
   return (
-    <div className="relative w-full h-full">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        className="w-full h-full object-cover"
-      />
-      
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-        <Button
-          onClick={isStreaming ? stopCamera : startCamera}
-          variant="outline"
-          size="lg"
-          className="bg-white/90 hover:bg-white"
-        >
-          {isStreaming ? (
-            <>
-              <CameraOff className="mr-2 h-5 w-5" />
-              Stop Camera
-            </>
-          ) : (
-            <>
-              <Camera className="mr-2 h-5 w-5" />
-              Start Camera
-            </>
-          )}
-        </Button>
-      </div>
+    <div className="relative w-full h-full bg-black">
+      {isLoading ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-white">Initializing camera...</div>
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          autoPlay
+          playsInline
+          muted
+        />
+      )}
     </div>
   );
 };
