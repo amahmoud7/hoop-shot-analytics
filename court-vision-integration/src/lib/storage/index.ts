@@ -1,4 +1,3 @@
-import { Shot } from '../detection/types';
 
 /**
  * Index file for storage module

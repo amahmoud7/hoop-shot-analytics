@@ -1,3 +1,4 @@
+
 import * as ort from 'onnxruntime-web';
 
 // Basic types for detection and calibration
@@ -82,4 +83,3 @@ export interface ModelConfig {
 }
 
 export type OnnxSession = ort.InferenceSession;
-

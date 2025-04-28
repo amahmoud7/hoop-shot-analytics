@@ -1,3 +1,4 @@
+
 import { Shot } from "../detection/types";
 
 // Basic statistics structure
@@ -45,4 +46,3 @@ export interface GameAnalytics {
   heatmap: HeatmapData;
   // Add more analytics as needed (e.g., shot streaks, time-based analysis)
 }
-
