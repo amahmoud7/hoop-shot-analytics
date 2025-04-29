@@ -31,6 +31,7 @@ export const useCamera = ({ autoStart = false, onCameraReady }: UseCameraProps) 
     setIsLoading(true);
     
     try {
+      console.log("Video ref exists before request:", !!videoRef.current);
       const success = await requestCameraAccess(isMobile, videoRef);
       
       if (success) {
@@ -70,7 +71,12 @@ export const useCamera = ({ autoStart = false, onCameraReady }: UseCameraProps) 
 
   // Manual play handler for iOS
   const handleManualPlay = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
+    if (!videoRef.current) {
+      console.error('Video element not found during manual play');
+      return;
+    }
+    
+    if (videoRef.current.srcObject) {
       videoRef.current.play()
         .then(() => {
           setCameraEnabled(true);
@@ -83,6 +89,8 @@ export const useCamera = ({ autoStart = false, onCameraReady }: UseCameraProps) 
         .catch(err => {
           console.error('Manual play error:', err);
         });
+    } else {
+      console.error('No video stream available for manual play');
     }
   };
 

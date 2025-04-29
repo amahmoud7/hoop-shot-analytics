@@ -31,7 +31,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
   return (
     <div 
       className="relative w-full h-full bg-black flex items-center justify-center"
-      onClick={handleManualPlay}
+      onClick={cameraStatus === 'granted' && !cameraEnabled ? handleManualPlay : undefined}
     >
       {isLoading ? (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -39,6 +39,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
         </div>
       ) : (
         <>
+          {/* Always render the video element, but hide it when not active */}
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
