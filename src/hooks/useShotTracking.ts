@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
-import { Shot, GameStats } from '@/lib/types';
-import { ShotStats } from '@/lib/courtVision';
+import { Shot } from '@/lib/types';
+import { GameStats } from '@/lib/types';
+import { ShotStats, BallDetection } from '@/lib/courtVision';
 import { toast } from '@/components/ui/use-toast';
 import { calculateStats } from '../../court-vision-integration/src/lib/detection/statsCalculator';
 

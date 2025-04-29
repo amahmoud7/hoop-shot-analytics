@@ -45,3 +45,6 @@ export interface CourtDimensions {
   keyWidth: number;
   keyHeight: number;
 }
+
+// Re-export BallDetection type from court-vision-integration
+export type { BallDetection } from '../../court-vision-integration/src/lib/detection/types';

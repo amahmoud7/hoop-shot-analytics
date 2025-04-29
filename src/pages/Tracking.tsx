@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
@@ -9,7 +8,8 @@ import TrackingControls from '@/components/TrackingControls';
 import TrackerOverlay from '@/components/TrackerOverlay';
 import { useShotTracking } from '@/hooks/useShotTracking';
 import { useDataStorage } from '@/lib/courtVision';
-import { Shot, BallDetection } from '@/lib/types';
+import { Shot } from '@/lib/types';
+import { BallDetection } from '../../court-vision-integration/src/lib/detection/types';
 
 const Tracking = () => {
   const navigate = useNavigate();
@@ -26,7 +26,6 @@ const Tracking = () => {
     calculateStats
   } = useShotTracking();
   
-  // Get the correct methods from useDataStorage
   const { saveGameWithAnalytics } = useDataStorage();
 
   useEffect(() => {
@@ -64,13 +63,10 @@ const Tracking = () => {
     } else {
       setIsRecording(false);
       
-      // Calculate stats with all required properties
       const gameStats = calculateStats(shots as Shot[]);
       
-      // For demo/testing, save the session with a unique ID
       const gameId = `game_${Date.now()}`;
       
-      // Use the correct method from useDataStorage
       saveGameWithAnalytics(gameId, {
         gameId,
         timestamp: Date.now(),
@@ -92,8 +88,6 @@ const Tracking = () => {
 
   const handleBallDetection = (detection: BallDetection) => {
     if (isRecording) {
-      // In a real implementation, this would process the ball detection
-      // For now, we'll use the mock function
       mockShotDetection();
     }
   };
