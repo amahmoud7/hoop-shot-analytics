@@ -42,23 +42,39 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
         // Ensure video plays when ready
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
-            videoRef.current.play().then(() => {
-              setCameraStatus('granted');
-              setCameraEnabled(true);
-              toast({
-                title: "Camera Ready",
-                description: "Camera access enabled successfully",
+            videoRef.current.play()
+              .then(() => {
+                setCameraStatus('granted');
+                setCameraEnabled(true);
+                console.log("Camera started successfully");
+                toast({
+                  title: "Camera Ready",
+                  description: "Camera access enabled successfully",
+                });
+                
+                if (onCameraReady) {
+                  onCameraReady();
+                }
+              })
+              .catch(error => {
+                console.error('Error playing video:', error);
+                setCameraStatus('denied');
+                toast({
+                  title: "Camera Error",
+                  description: "Could not start video stream: " + error.message,
+                  variant: "destructive",
+                });
               });
-              
-              if (onCameraReady) {
-                onCameraReady();
-              }
-            }).catch(error => {
-              console.error('Error playing video:', error);
-              setCameraStatus('denied');
-            });
           }
         };
+      } else {
+        console.error('No stream or video element available');
+        setCameraStatus('denied');
+        toast({
+          title: "Camera Error",
+          description: "Could not access camera stream",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -78,13 +94,20 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     if (autoStart && cameraStatus === 'notRequested') {
       requestCameraAccess();
     }
+    
+    // Cleanup camera on unmount
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
   }, [autoStart]);
 
   // Placeholder for detection simulation (temporary)
   useEffect(() => {
     if (cameraEnabled && onDetection) {
       // Simulate a detection event for demonstration purposes
-      // This will be replaced by actual AI detection
       const detectionInterval = setInterval(() => {
         if (Math.random() > 0.7) {
           const simulatedDetection = {
@@ -103,16 +126,6 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     }
   }, [cameraEnabled, onDetection]);
 
-  // Cleanup camera on unmount
-  useEffect(() => {
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
   return (
     <div className="relative w-full h-full bg-black">
       {isLoading ? (
@@ -127,6 +140,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
             autoPlay
             playsInline
             muted
+            style={{ display: cameraEnabled ? 'block' : 'none' }}
           />
           
           {!cameraEnabled && (

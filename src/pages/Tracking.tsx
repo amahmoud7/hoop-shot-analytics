@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
@@ -94,6 +95,7 @@ const Tracking = () => {
 
   const handleCameraReady = () => {
     setCameraEnabled(true);
+    console.log("Camera is ready in Tracking component");
     toast({
       title: "Camera Ready",
       description: "Press start to begin tracking",
@@ -110,11 +112,11 @@ const Tracking = () => {
       />
       
       <div className="flex-1 relative flex flex-col">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-0">
           <CameraFeed 
             onCameraReady={handleCameraReady} 
             onDetection={handleBallDetection}
-            autoStart={false}
+            autoStart={true}
           />
         </div>
         
