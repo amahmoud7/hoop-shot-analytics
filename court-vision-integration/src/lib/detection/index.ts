@@ -10,3 +10,5 @@ export * from './useBallDetection';
 export * from './courtCalibrator';
 export * from './useCourtCalibration';
 export * from './useShotTracking';
+export * from './trajectoryAnalyzer';
+export * from './statsCalculator';
