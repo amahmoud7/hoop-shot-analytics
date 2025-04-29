@@ -7,9 +7,9 @@ import CameraFeed from '@/components/CameraFeed';
 import ShotAnimationOverlay from '@/components/ShotAnimationOverlay';
 import TrackingControls from '@/components/TrackingControls';
 import TrackerOverlay from '@/components/TrackerOverlay';
-import { useShotTracking, ShotStats, BallDetection } from '@/lib/courtVision';
+import { useShotTracking } from '@/hooks/useShotTracking';
 import { useDataStorage } from '@/lib/courtVision';
-import { Shot } from '@/lib/types';
+import { Shot, BallDetection } from '@/lib/types';
 
 const Tracking = () => {
   const navigate = useNavigate();
@@ -22,10 +22,8 @@ const Tracking = () => {
     shots, 
     score, 
     shotAnimation, 
-    processBallDetection,
-    calculateStats,
-    setRimPosition,
-    isTracking
+    mockShotDetection,
+    calculateStats
   } = useShotTracking();
   
   // Get the correct methods from useDataStorage
@@ -46,21 +44,6 @@ const Tracking = () => {
       }
     };
   }, [isRecording]);
-
-  // Added function to simulate shot detection for demo purposes
-  const mockShotDetection = () => {
-    // Create a mock ball detection with all required properties
-    const mockDetection: BallDetection = {
-      x: Math.random() * 640,
-      y: Math.random() * 480,
-      timestamp: Date.now(),
-      confidence: 0.9,
-      radius: 15
-    };
-    
-    // Process the mock detection
-    processBallDetection(mockDetection);
-  };
 
   const toggleRecording = () => {
     if (!cameraEnabled) {
@@ -107,7 +90,7 @@ const Tracking = () => {
     }
   };
 
-  const handleBallDetection = (detection: any) => {
+  const handleBallDetection = (detection: BallDetection) => {
     if (isRecording) {
       // In a real implementation, this would process the ball detection
       // For now, we'll use the mock function
@@ -121,11 +104,6 @@ const Tracking = () => {
       title: "Camera Ready",
       description: "Press start to begin tracking",
     });
-  };
-  
-  const requestCameraAccess = () => {
-    // This function is passed to the TrackingControls
-    // The actual camera request happens in CameraFeed component
   };
 
   return (
@@ -160,7 +138,7 @@ const Tracking = () => {
           stats={calculateStats(shots as Shot[])}
           onToggleRecording={toggleRecording}
           cameraEnabled={cameraEnabled}
-          onRequestCamera={requestCameraAccess}
+          onRequestCamera={() => {}}
         />
       </div>
     </div>

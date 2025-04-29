@@ -5,12 +5,14 @@ import { Check, X, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import { toast } from '@/components/ui/use-toast';
+import CameraFeed from '@/components/CameraFeed';
 import { CalibrationPoint } from '@/lib/types';
 
 const Calibration = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<number>(1);
   const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+  const [cameraEnabled, setCameraEnabled] = useState<boolean>(false);
   
   // Predefined calibration points to collect
   const requiredPoints = [
@@ -62,6 +64,14 @@ const Calibration = () => {
     navigate('/tracking');
   };
 
+  const handleCameraReady = () => {
+    setCameraEnabled(true);
+    toast({
+      title: "Camera Ready",
+      description: "Tap the court points for calibration",
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header 
@@ -92,22 +102,19 @@ const Calibration = () => {
               className="flex-1 relative"
               onClick={handleScreenTap}
             >
-              {/* Camera feed placeholder */}
-              <div className="absolute inset-0 bg-gray-900">
-                <div className="flex items-center justify-center h-full text-white">
-                  <div className="text-center">
-                    <Crosshair size={48} className="mx-auto mb-2 text-white" />
-                    <p>Camera feed unavailable in prototype</p>
-                    <p className="text-sm text-gray-400">Tap anywhere to set calibration point</p>
-                  </div>
-                </div>
+              {/* Live camera feed */}
+              <div className="absolute inset-0">
+                <CameraFeed
+                  onCameraReady={handleCameraReady}
+                  autoStart={true}
+                />
               </div>
               
               {/* Calibration points */}
               {calibrationPoints.map((point, index) => (
                 <div 
                   key={index}
-                  className="absolute w-6 h-6 bg-teal rounded-full flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2"
+                  className="absolute w-6 h-6 bg-teal rounded-full flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 z-10"
                   style={{ 
                     left: `${point.x}%`, 
                     top: `${point.y}%`

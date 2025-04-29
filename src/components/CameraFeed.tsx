@@ -39,16 +39,26 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
       
       if (stream && videoRef.current) {
         videoRef.current.srcObject = stream;
-        setCameraStatus('granted');
-        setCameraEnabled(true);
-        toast({
-          title: "Camera Ready",
-          description: "Camera access enabled successfully",
-        });
-        
-        if (onCameraReady) {
-          onCameraReady();
-        }
+        // Ensure video plays when ready
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              setCameraStatus('granted');
+              setCameraEnabled(true);
+              toast({
+                title: "Camera Ready",
+                description: "Camera access enabled successfully",
+              });
+              
+              if (onCameraReady) {
+                onCameraReady();
+              }
+            }).catch(error => {
+              console.error('Error playing video:', error);
+              setCameraStatus('denied');
+            });
+          }
+        };
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
