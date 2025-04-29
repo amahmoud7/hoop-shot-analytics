@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Shot, GameStats } from '@/lib/types';
 import { ShotStats } from '@/lib/courtVision';
 import { toast } from '@/components/ui/use-toast';
-import { calculateStats } from '@/lib/detection/statsCalculator';
+import { calculateStats } from '../../court-vision-integration/src/lib/detection/statsCalculator';
 
 export const useShotTracking = () => {
   const [shots, setShots] = useState<Shot[]>([]);
