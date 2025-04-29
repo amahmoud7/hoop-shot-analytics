@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, Crosshair } from 'lucide-react';
@@ -7,12 +6,14 @@ import Header from '@/components/Header';
 import { toast } from '@/components/ui/use-toast';
 import CameraFeed from '@/components/CameraFeed';
 import { CalibrationPoint } from '@/lib/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Calibration = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<number>(1);
   const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
   const [cameraEnabled, setCameraEnabled] = useState<boolean>(false);
+  const isMobile = useIsMobile();
   
   // Predefined calibration points to collect
   const requiredPoints = [
@@ -26,15 +27,28 @@ const Calibration = () => {
   
   const currentPoint = requiredPoints[calibrationPoints.length] || requiredPoints[0];
 
-  const handleScreenTap = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleScreenTap = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (calibrationPoints.length >= requiredPoints.length) return;
     
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
+    // Get coordinates from either touch or mouse event
+    let clientX: number, clientY: number;
+    
+    if ('touches' in e) {
+      // Touch event
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      // Mouse event
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    
     // Calculate relative position (0-100)
-    const x = (e.clientX / viewportWidth) * 100;
-    const y = (e.clientY / viewportHeight) * 100;
+    const x = (clientX / viewportWidth) * 100;
+    const y = (clientY / viewportHeight) * 100;
     
     // Add point
     const newPoint: CalibrationPoint = {
@@ -101,6 +115,7 @@ const Calibration = () => {
             <div 
               className="flex-1 relative"
               onClick={handleScreenTap}
+              onTouchStart={handleScreenTap}
             >
               {/* Live camera feed */}
               <div className="absolute inset-0">

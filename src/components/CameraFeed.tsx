@@ -2,8 +2,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, CameraOff, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getCameraStream } from '../../court-vision-integration/src/lib/browser-compatibility';
+import { getCameraStream, applyBrowserWorkarounds } from '../../court-vision-integration/src/lib/browser-compatibility';
 import { toast } from '@/components/ui/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CameraFeedProps {
   onCameraReady?: () => void;
@@ -20,6 +21,12 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraStatus, setCameraStatus] = useState<'notRequested' | 'requesting' | 'granted' | 'denied'>('notRequested');
+  const isMobile = useIsMobile();
+  
+  // Apply iOS and other browser-specific fixes on component mount
+  useEffect(() => {
+    applyBrowserWorkarounds();
+  }, []);
   
   // Request camera access
   const requestCameraAccess = async () => {
@@ -29,9 +36,12 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     setIsLoading(true);
     
     try {
+      // Use environment-facing camera by default on mobile devices
+      const facingMode = isMobile ? "environment" : "user";
+      
       const stream = await getCameraStream({
         video: {
-          facingMode: 'environment',
+          facingMode: facingMode,
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
@@ -39,32 +49,56 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
       
       if (stream && videoRef.current) {
         videoRef.current.srcObject = stream;
+        
+        // Set additional attributes for iOS
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
+        videoRef.current.muted = true;
+        
         // Ensure video plays when ready
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
-            videoRef.current.play()
-              .then(() => {
-                setCameraStatus('granted');
-                setCameraEnabled(true);
-                console.log("Camera started successfully");
-                toast({
-                  title: "Camera Ready",
-                  description: "Camera access enabled successfully",
+            // Try to play the video immediately
+            const playPromise = videoRef.current.play();
+            
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  setCameraStatus('granted');
+                  setCameraEnabled(true);
+                  console.log("Camera started successfully");
+                  toast({
+                    title: "Camera Ready",
+                    description: "Camera access enabled successfully",
+                  });
+                  
+                  if (onCameraReady) {
+                    onCameraReady();
+                  }
+                })
+                .catch(error => {
+                  console.error('Error playing video:', error);
+                  
+                  // For iOS, we might need user interaction
+                  if (isMobile) {
+                    setCameraStatus('granted');
+                    setCameraEnabled(true);
+                    
+                    // Show manual play button for iOS
+                    toast({
+                      title: "Tap to Start Camera",
+                      description: "Please tap the screen to start the camera",
+                    });
+                  } else {
+                    setCameraStatus('denied');
+                    toast({
+                      title: "Camera Error",
+                      description: "Could not start video stream: " + error.message,
+                      variant: "destructive",
+                    });
+                  }
                 });
-                
-                if (onCameraReady) {
-                  onCameraReady();
-                }
-              })
-              .catch(error => {
-                console.error('Error playing video:', error);
-                setCameraStatus('denied');
-                toast({
-                  title: "Camera Error",
-                  description: "Could not start video stream: " + error.message,
-                  variant: "destructive",
-                });
-              });
+            }
           }
         };
       } else {
@@ -104,6 +138,19 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     };
   }, [autoStart]);
 
+  // Manual play handler for iOS
+  const handleManualPlay = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.play()
+        .then(() => {
+          if (onCameraReady) {
+            onCameraReady();
+          }
+        })
+        .catch(err => console.error('Manual play error:', err));
+    }
+  };
+
   // Placeholder for detection simulation (temporary)
   useEffect(() => {
     if (cameraEnabled && onDetection) {
@@ -127,7 +174,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
   }, [cameraEnabled, onDetection]);
 
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative w-full h-full bg-black" onClick={handleManualPlay}>
       {isLoading ? (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-white">Initializing camera...</div>
@@ -139,6 +186,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
             className="w-full h-full object-cover"
             autoPlay
             playsInline
+            webkit-playsinline="true"
             muted
             style={{ display: cameraEnabled ? 'block' : 'none' }}
           />
