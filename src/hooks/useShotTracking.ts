@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Shot, GameStats } from '@/lib/types';
 import { ShotStats } from '@/lib/courtVision';
 import { toast } from '@/components/ui/use-toast';
+import { calculateStats } from '@/lib/detection/statsCalculator';
 
 export const useShotTracking = () => {
   const [shots, setShots] = useState<Shot[]>([]);
@@ -50,35 +51,6 @@ export const useShotTracking = () => {
         description: `Shot made from ${isThreePoint ? "three-point range" : "two-point range"}`,
       });
     }
-  };
-
-  const calculateStats = (currentShots: Shot[]): ShotStats => {
-    const madeShots = currentShots.filter(shot => shot.isMade).length;
-    const twoPointMade = currentShots.filter(shot => !shot.isThreePoint && shot.isMade).length;
-    const threePointMade = currentShots.filter(shot => shot.isThreePoint && shot.isMade).length;
-    
-    // Calculate missed shots
-    const missedShots = currentShots.length - madeShots;
-    
-    // Calculate total points scored
-    const pointsScored = (twoPointMade * 2) + (threePointMade * 3);
-    
-    return {
-      totalShots: currentShots.length,
-      madeShots: madeShots,
-      missedShots: missedShots, // Add the missing property
-      twoPointAttempts: currentShots.filter(shot => !shot.isThreePoint).length,
-      twoPointMade: twoPointMade,
-      threePointAttempts: currentShots.filter(shot => shot.isThreePoint).length,
-      threePointMade: threePointMade,
-      shotPercentage: currentShots.length > 0 ? 
-        (madeShots / currentShots.length) * 100 : 0,
-      twoPointPercentage: currentShots.filter(shot => !shot.isThreePoint).length > 0 ? 
-        (twoPointMade / currentShots.filter(shot => !shot.isThreePoint).length) * 100 : 0,
-      threePointPercentage: currentShots.filter(shot => shot.isThreePoint).length > 0 ?
-        (threePointMade / currentShots.filter(shot => shot.isThreePoint).length) * 100 : 0,
-      pointsScored: pointsScored // Add the missing property
-    };
   };
 
   return {
