@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, Crosshair } from 'lucide-react';
@@ -28,6 +29,14 @@ const Calibration = () => {
   const currentPoint = requiredPoints[calibrationPoints.length] || requiredPoints[0];
 
   const handleScreenTap = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    if (!cameraEnabled) {
+      toast({
+        title: "Camera Not Ready",
+        description: "Please enable the camera first",
+      });
+      return;
+    }
+    
     if (calibrationPoints.length >= requiredPoints.length) return;
     
     const viewportWidth = window.innerWidth;
@@ -66,6 +75,13 @@ const Calibration = () => {
         description: "The court has been calibrated successfully.",
       });
       setStep(2);
+    } else {
+      // Show feedback for each point addition
+      toast({
+        title: `${currentPoint.label} marked`,
+        description: `${calibrationPoints.length + 1}/${requiredPoints.length} points marked`,
+        duration: 1500,
+      });
     }
   };
   
@@ -118,7 +134,7 @@ const Calibration = () => {
               onTouchStart={handleScreenTap}
             >
               {/* Live camera feed */}
-              <div className="absolute inset-0">
+              <div className="absolute inset-0 z-0">
                 <CameraFeed
                   onCameraReady={handleCameraReady}
                   autoStart={true}

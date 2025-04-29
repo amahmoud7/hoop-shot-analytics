@@ -28,6 +28,29 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     applyBrowserWorkarounds();
   }, []);
   
+  // Manual play handler for iOS
+  const handleManualPlay = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.play()
+        .then(() => {
+          setCameraEnabled(true);
+          setCameraStatus('granted');
+          console.log("Manual play succeeded");
+          if (onCameraReady) {
+            onCameraReady();
+          }
+        })
+        .catch(err => {
+          console.error('Manual play error:', err);
+          toast({
+            title: "Camera Error",
+            description: "Could not start video playback: " + err.message,
+            variant: "destructive",
+          });
+        });
+    }
+  };
+  
   // Request camera access
   const requestCameraAccess = async () => {
     if (cameraStatus === 'requesting') return;
@@ -36,18 +59,54 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     setIsLoading(true);
     
     try {
+      console.log("Requesting camera access...");
+      
       // Use environment-facing camera by default on mobile devices
       const facingMode = isMobile ? "environment" : "user";
       
-      const stream = await getCameraStream({
-        video: {
-          facingMode: facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
+      // Try different camera constraints in order of preference
+      const constraints = [
+        // First try: HD with environment camera on mobile
+        {
+          video: {
+            facingMode: facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        },
+        // Second try: Standard resolution
+        {
+          video: {
+            facingMode: facingMode,
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        },
+        // Last resort: Basic video
+        { video: true }
+      ];
       
-      if (stream && videoRef.current) {
+      let stream = null;
+      let errorMessage = "";
+      
+      // Try each constraint until one works
+      for (const constraint of constraints) {
+        try {
+          console.log("Trying constraint:", constraint);
+          stream = await getCameraStream(constraint);
+          if (stream) break;
+        } catch (e: any) {
+          errorMessage = e.message || "Unknown error";
+          console.warn("Failed with constraint:", constraint, e);
+        }
+      }
+      
+      if (!stream) {
+        throw new Error(errorMessage || "Could not access camera with any constraints");
+      }
+      
+      if (videoRef.current) {
+        console.log("Stream obtained, setting to video element");
         videoRef.current.srcObject = stream;
         
         // Set additional attributes for iOS
@@ -58,15 +117,16 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
         // Ensure video plays when ready
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
+            console.log("Video metadata loaded, trying to play");
             // Try to play the video immediately
             const playPromise = videoRef.current.play();
             
             if (playPromise !== undefined) {
               playPromise
                 .then(() => {
+                  console.log("Camera started successfully - auto play worked");
                   setCameraStatus('granted');
                   setCameraEnabled(true);
-                  console.log("Camera started successfully");
                   toast({
                     title: "Camera Ready",
                     description: "Camera access enabled successfully",
@@ -79,15 +139,16 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
                 .catch(error => {
                   console.error('Error playing video:', error);
                   
-                  // For iOS, we might need user interaction
+                  // For iOS, we need user interaction
                   if (isMobile) {
-                    setCameraStatus('granted');
-                    setCameraEnabled(true);
+                    console.log("Mobile detected, showing manual play button");
+                    setCameraStatus('granted'); // We have the stream, just need interaction
+                    // Don't set cameraEnabled yet - wait for manual play
                     
-                    // Show manual play button for iOS
                     toast({
                       title: "Tap to Start Camera",
                       description: "Please tap the screen to start the camera",
+                      duration: 5000,
                     });
                   } else {
                     setCameraStatus('denied');
@@ -101,21 +162,27 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
             }
           }
         };
+        
+        // Add error handler for the video element
+        videoRef.current.onerror = (event) => {
+          console.error('Video element error:', event);
+          setCameraStatus('denied');
+          toast({
+            title: "Camera Error",
+            description: "Video element error occurred",
+            variant: "destructive",
+          });
+        };
       } else {
-        console.error('No stream or video element available');
-        setCameraStatus('denied');
-        toast({
-          title: "Camera Error",
-          description: "Could not access camera stream",
-          variant: "destructive",
-        });
+        console.error('No video element available');
+        throw new Error("Video element not found");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accessing camera:', error);
       setCameraStatus('denied');
       toast({
         title: "Camera Access Denied",
-        description: "Please enable camera access in browser settings",
+        description: "Error: " + (error.message || "Could not access camera stream"),
         variant: "destructive",
       });
     } finally {
@@ -133,23 +200,13 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(track => {
+          console.log("Stopping track:", track.kind);
+          track.stop();
+        });
       }
     };
   }, [autoStart]);
-
-  // Manual play handler for iOS
-  const handleManualPlay = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.play()
-        .then(() => {
-          if (onCameraReady) {
-            onCameraReady();
-          }
-        })
-        .catch(err => console.error('Manual play error:', err));
-    }
-  };
 
   // Placeholder for detection simulation (temporary)
   useEffect(() => {
@@ -174,7 +231,10 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
   }, [cameraEnabled, onDetection]);
 
   return (
-    <div className="relative w-full h-full bg-black" onClick={handleManualPlay}>
+    <div 
+      className="relative w-full h-full bg-black flex items-center justify-center"
+      onClick={handleManualPlay}
+    >
       {isLoading ? (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-white">Initializing camera...</div>
@@ -188,16 +248,30 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
             playsInline
             webkit-playsinline="true"
             muted
-            style={{ display: cameraEnabled ? 'block' : 'none' }}
+            style={{ display: cameraStatus === 'granted' ? 'block' : 'none' }}
           />
           
-          {!cameraEnabled && (
+          {cameraStatus !== 'granted' || !cameraEnabled ? (
             <div className="absolute inset-0 flex items-center justify-center flex-col gap-3 bg-black bg-opacity-70">
               {cameraStatus === 'denied' ? (
                 <>
                   <CameraOff size={48} className="text-red-500" />
                   <p className="text-white text-center px-4">
-                    Camera access denied. Please enable camera access in your browser settings.
+                    Camera access denied. Please ensure you've granted camera permissions in your browser settings.
+                  </p>
+                  <Button 
+                    onClick={requestCameraAccess} 
+                    className="bg-basketball hover:bg-orange-600 mt-4"
+                  >
+                    <Camera className="mr-2" />
+                    Try Again
+                  </Button>
+                </>
+              ) : cameraStatus === 'granted' && !cameraEnabled ? (
+                <>
+                  <Play size={48} className="text-white" />
+                  <p className="text-white mb-4">
+                    Tap here to start the camera
                   </p>
                 </>
               ) : (
@@ -217,7 +291,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
                 </>
               )}
             </div>
-          )}
+          ) : null}
         </>
       )}
     </div>

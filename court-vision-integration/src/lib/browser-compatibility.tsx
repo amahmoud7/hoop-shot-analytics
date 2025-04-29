@@ -1,3 +1,4 @@
+
 /**
  * Cross-browser compatibility layer for basketball tracking functionality
  * Provides fallbacks and polyfills for various browser environments
@@ -65,6 +66,16 @@ export const browserCapabilities = {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   },
 
+  // Check if device is iOS
+  isIOS: () => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  },
+
+  // Check if browser is Safari
+  isSafari: () => {
+    return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  },
+
   // Check if the device has touch support
   hasTouchSupport: () => {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -95,19 +106,44 @@ export const getCameraStream = async (constraints: MediaStreamConstraints = {
     return null;
   }
 
+  // Special handling for iOS Safari
+  const isIOS = browserCapabilities.isIOS();
+  
+  if (isIOS) {
+    console.log("iOS detected, using specialized camera handling");
+  }
+
   try {
     // Try with provided constraints first
+    console.log("Attempting to get camera with constraints:", JSON.stringify(constraints));
     return await navigator.mediaDevices.getUserMedia(constraints);
   } catch (error) {
     console.warn('Failed to get camera with ideal constraints, trying fallback', error);
     
+    // For iOS, try a more specific fallback
+    if (isIOS) {
+      try {
+        console.log("Trying iOS-specific fallback");
+        // iOS specific constraints
+        return await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        });
+      } catch (iosError) {
+        console.warn('iOS fallback failed, trying basic video', iosError);
+      }
+    }
+    
     try {
-      // Fallback to basic video
-      return await navigator.mediaDevices.getUserMedia({ 
-        video: true 
-      });
+      // Basic fallback as last resort
+      console.log("Trying basic video fallback");
+      return await navigator.mediaDevices.getUserMedia({ video: true });
     } catch (fallbackError) {
-      console.error('Camera access failed with fallback constraints', fallbackError);
+      console.error('Camera access failed with all fallback constraints', fallbackError);
       return null;
     }
   }
@@ -215,21 +251,99 @@ export const createFallbackRenderer = (canvas: HTMLCanvasElement) => {
 // Browser-specific workarounds
 export const applyBrowserWorkarounds = () => {
   // iOS Safari specific fixes
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isIOS = browserCapabilities.isIOS();
   if (isIOS) {
+    console.log("Applying iOS-specific workarounds");
+    
     // Fix for iOS Safari video playback issues
     document.addEventListener('touchstart', () => {
+      console.log("First touch detected, enabling media on iOS");
       // This empty handler enables media playback on first touch
-    }, { once: true });
+      
+      // Find all video elements and try to play them
+      document.querySelectorAll('video').forEach(video => {
+        if (video.paused) {
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.log("Auto-play still not working after touch:", err);
+              // This is expected - iOS still requires user gesture directly on video
+            });
+          }
+        }
+      });
+    }, { once: false });
+    
+    // Add playsinline to all videos created dynamically
+    const originalCreateElement = document.createElement;
+    document.createElement = function(tagName: string) {
+      const element = originalCreateElement.call(document, tagName);
+      if (tagName.toLowerCase() === 'video') {
+        (element as HTMLVideoElement).setAttribute('playsinline', '');
+        (element as HTMLVideoElement).setAttribute('webkit-playsinline', '');
+        (element as HTMLVideoElement).muted = true;
+      }
+      return element;
+    } as typeof document.createElement;
   }
   
   // Safari autoplay fix
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isSafari = browserCapabilities.isSafari();
   if (isSafari) {
+    console.log("Applying Safari-specific workarounds");
+    
     // Add playsinline attribute to all video elements
     document.querySelectorAll('video').forEach(video => {
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
+      video.muted = true;
     });
   }
+};
+
+// Try to get any available camera from device
+export const getAnyCameraStream = async (): Promise<MediaStream | null> => {
+  const constraints = [
+    // First try: environment camera
+    {
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    },
+    // Second try: front camera
+    {
+      video: {
+        facingMode: "user",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    },
+    // Third try: Any camera, lower resolution
+    {
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      }
+    },
+    // Last resort
+    { video: true }
+  ];
+  
+  for (const constraint of constraints) {
+    try {
+      console.log("Trying to get camera with constraint:", JSON.stringify(constraint));
+      const stream = await navigator.mediaDevices.getUserMedia(constraint);
+      if (stream) {
+        console.log("Successfully got camera stream");
+        return stream;
+      }
+    } catch (e) {
+      console.warn("Failed to get camera with constraint:", constraint, e);
+    }
+  }
+  
+  console.error("Could not get any camera stream after trying all fallbacks");
+  return null;
 };
