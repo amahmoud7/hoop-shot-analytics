@@ -55,7 +55,7 @@ const Tracking = () => {
       y: Math.random() * 480,
       timestamp: Date.now(),
       confidence: 0.9,
-      radius: 15 // Add the missing radius property
+      radius: 15
     };
     
     // Process the mock detection
@@ -87,7 +87,7 @@ const Tracking = () => {
       // For demo/testing, save the session with a unique ID
       const gameId = `game_${Date.now()}`;
       
-      // Use the correct method from useDataStorage - passing GameAnalytics directly, not wrapped
+      // Use the correct method from useDataStorage
       saveGameWithAnalytics(gameId, {
         gameId,
         timestamp: Date.now(),
